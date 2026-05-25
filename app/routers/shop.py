@@ -12,6 +12,7 @@ from app.services.shop_service import equip_item_by_type, get_owned_item_ids, ow
 router = APIRouter(prefix="/api/shop", tags=["shop"])
 
 
+# 상점에 등록된 전체 아이템 목록과 현재 사용자의 보유 여부를 반환한다.
 @router.get("/items", response_model=list[ShopItemResponse])
 def get_shop_items(
     db: Session = Depends(get_db),
@@ -22,6 +23,7 @@ def get_shop_items(
     return [to_shop_item_response(item, owned_item_ids) for item in items]
 
 
+# 현재 사용자가 구매하거나 지급받아 보유 중인 아이템 목록을 반환한다.
 @router.get("/my-items", response_model=list[ShopItemResponse])
 def get_my_items(
     db: Session = Depends(get_db),
@@ -38,6 +40,7 @@ def get_my_items(
     return [to_shop_item_response(item, owned_item_ids) for item in items]
 
 
+# 포인트를 차감하고 선택한 상점 아이템을 사용자 보유 목록에 추가한다.
 @router.post("/items/{item_id}/buy", response_model=BuyItemResponse)
 def buy_item(
     item_id: int,
@@ -64,6 +67,7 @@ def buy_item(
     )
 
 
+# 사용자가 보유한 아이템을 타입에 맞는 장착 슬롯에 설정한다.
 @router.post("/items/{item_id}/equip", response_model=EquipItemResponse)
 def equip_item(
     item_id: int,
