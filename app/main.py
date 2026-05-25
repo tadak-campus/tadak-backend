@@ -4,6 +4,7 @@ from app.database import Base, SessionLocal, engine
 from app.routers import auth, practice, shop, users
 from app.services.shop_service import seed_default_shop_items
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 
 load_dotenv()
@@ -22,6 +23,13 @@ def create_app() -> FastAPI:
     app.include_router(users.router)
     app.include_router(practice.router)
     app.include_router(shop.router)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     return app
 
 
