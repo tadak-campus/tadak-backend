@@ -3,6 +3,10 @@ from fastapi import FastAPI
 from app.database import Base, SessionLocal, engine
 from app.routers import auth, practice, shop, users
 from app.services.shop_service import seed_default_shop_items
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 def create_app() -> FastAPI:
