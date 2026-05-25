@@ -5,6 +5,7 @@ import json
 import os
 import time
 
+import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -14,10 +15,40 @@ from app.models import User
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "tadak-dev-secret")
 JWT_EXPIRE_SECONDS = 60 * 60 * 24
 
+KAKAO_USER_ME_URL = "https://kapi.kakao.com/v2/user/me"
 
-def verify_kakao_login_mock(kakao_id: str, profile_nickname: str) -> dict[str, str]:
-    # TODO: 실제 카카오 access token 검증 API 호출로 교체한다.
-    return {"kakao_id": kakao_id, "profile_nickname": profile_nickname}
+
+
+def get_kakao_user_info(kakao_access_token: str) -> dict[str, str]:
+    try:
+        response =  httpx.get(
+            KAKAO_USER_ME_URL,
+            headers={"Authorization": f"Bearer {kakao_access_token}"},
+            timeout=5
+        )
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="카카오 API 요청 중 오류 발생함"
+        ) from exc
+
+
+    if response.status_code != status.HTTP_200_OK:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="카카오 인증 실패"
+        )
+
+    data = response.json()
+    return {
+        "kakao_id" : str(data["id"]),
+        "profile_nickname" : (
+            data.get("kakao_account", {})
+            .get("profile", {})
+            .get("nickname")
+            or "타닥이는 사용자"
+        )
+    }
 
 
 def get_or_create_user(db: Session, kakao_id: str, profile_nickname: str) -> User:

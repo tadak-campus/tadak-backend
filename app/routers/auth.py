@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas import KakaoLoginRequest, TokenResponse
-from app.services.auth_service import create_access_token, get_or_create_user, verify_kakao_login_mock
+from app.services.auth_service import create_access_token, get_or_create_user, get_kakao_user_info
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -11,7 +11,8 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/login", response_model=TokenResponse)
 def kakao_login(request: KakaoLoginRequest, db: Session = Depends(get_db)):
-    kakao_profile = verify_kakao_login_mock(request.kakao_id, request.profile_nickname)
+    kakao_profile = get_kakao_user_info(request.kakao_access_token)
+
     user = get_or_create_user(
         db,
         kakao_id=kakao_profile["kakao_id"],
