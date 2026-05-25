@@ -9,7 +9,7 @@ from app.services.auth_service import create_access_token, get_or_create_user, v
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-@router.post("/kakao/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse)
 def kakao_login(request: KakaoLoginRequest, db: Session = Depends(get_db)):
     kakao_profile = verify_kakao_login_mock(request.kakao_id, request.profile_nickname)
     user = get_or_create_user(
