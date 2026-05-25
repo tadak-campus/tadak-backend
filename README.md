@@ -2,12 +2,9 @@
 
 PDF 학습자료 기반 타이핑 연습과 포인트 상점 기능을 위한 FastAPI MVP입니다.
 
-## 기술 스택
+## 아키텍쳐
+<img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/4178548a-6349-43f3-b77c-1e22e1ad6767" />
 
-- FastAPI
-- SQLAlchemy
-- SQLite
-- pytest
 
 ## 실행
 
