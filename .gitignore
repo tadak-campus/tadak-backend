@@ -1,0 +1,9 @@
+docs
+.DS_Store
+AGENTS.md
+.idea/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.db
