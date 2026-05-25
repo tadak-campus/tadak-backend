@@ -1,7 +1,6 @@
 # 타닥캠퍼스 FastAPI 백엔드 MVP
 
-PDF 학습자료 기반 타이핑 연습과 포인트 상점 기능을 위한 FastAPI MVP입니다.  
-카카오 로그인, PDF/LLM 처리, AWS S3 업로드는 실제 연동하지 않고 교체 가능한 mock 함수로 분리했습니다.
+PDF 학습자료 기반 타이핑 연습과 포인트 상점 기능을 위한 FastAPI MVP입니다.
 
 ## 기술 스택
 
@@ -9,14 +8,6 @@ PDF 학습자료 기반 타이핑 연습과 포인트 상점 기능을 위한 Fa
 - SQLAlchemy
 - SQLite
 - pytest
-
-## 설치
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
 
 ## 실행
 
@@ -36,51 +27,20 @@ http://127.0.0.1:8000/docs
 DATABASE_URL=sqlite:///./local.db uvicorn app.main:app --reload
 ```
 
-## 테스트
+## PDF 처리 방식에 대한 고민
 
-```bash
-pytest
-```
+PDF로 연습 문장을 만드는 방법은 크게 두 가지가 있습니다.
 
-테스트는 다음 흐름을 확인합니다.
+첫 번째는 서버에서 PDF를 먼저 텍스트로 뽑고, 그 텍스트를 기준으로 문장을 자르거나 LLM에 넘기는 방식입니다. `pypdf`, `pdfplumber` 같은 라이브러리를 쓰면 구현 자체는 빠르고 비용도 적습니다. LLM에 보내는 토큰도 줄어들고, 문장을 어디서 잘랐는지도 어느 정도 제어할 수 있습니다.
 
-- mock 카카오 로그인으로 신규 유저 생성 및 JWT 반환
-- JWT로 `/api/users/me` 호출
-- 상점 아이템 목록 조회
-- 아이템 구매 시 포인트 차감 및 보유 아이템 생성
-- 보유 아이템 장착
-- 연습 완료 API 호출 시 포인트 증가
+다만 이 방식은 PDF가 가진 레이아웃 정보를 온전히 보존하기 어렵습니다. 줄글 위주의 자료라면 괜찮겠지만, 표나 차트가 섞이면 텍스트 추출 결과만으로는 문서의 의미가 손상될 수 있습니다. 스캔본이나 이미지 기반 PDF까지 고려하면 OCR도 필요해지는데, 이건 MVP 단계에서 직접 안정화하기에는 과합니다.
 
-## 구현된 API
+두 번째는 PDF 파일을 그대로 LLM API에 첨부하는 방식입니다. 예를 들어 Gemini API는 PDF를 최대 1,000페이지 또는 50MB까지 처리할 수 있습니다. 우리 수업자료가 아무리 많아도 이 범위를 넘을 가능성은 낮다고 봤습니다.
 
-```http
-POST /api/auth/kakao/login
-GET  /api/users/me
-POST /api/practice/generate
-POST /api/practice/complete
-GET  /api/shop/items
-GET  /api/shop/my-items
-POST /api/shop/items/{item_id}/buy
-POST /api/shop/items/{item_id}/equip
-```
+처음에는 큰 PDF를 통째로 모델 컨텍스트에 넣는 게 낭비 아닌가 하는 생각도 들었습니다. 그런데 우리 서비스는 PDF를 기반으로 퀴즈를 만들거나, 복습 카드를 만들거나, 검색용으로 계속 재사용하는 구조가 아닙니다. 그냥 업로드한 PDF에서 타이핑 연습용 문장을 만들고 끝입니다. 그러면 큰 컨텍스트를 여러 기능에서 재사용하기 위한 비용 최적화나 파이프라인 설계까지 지금 고민할 필요는 크지 않습니다.
 
-## mock 교체 지점
+PDF 직접 첨부 방식의 단점도 있습니다. LLM이 문서 전체를 보고 문장을 만들기 때문에, 생성된 문장이 정확히 몇 페이지의 어느 단락에서 나온 것인지 추적하기 어렵습니다. 하지만 현재 MVP에서는 출처 표시가 요구사항이 아닙니다. 사용자는 문장의 출처보다 연습하기 좋은 문장이 잘 나오는지가 더 중요합니다.
 
-- `app/services/auth_service.py`
-  - `verify_kakao_login_mock`: 추후 실제 카카오 access token 검증 API 호출로 교체
-- `app/services/practice_service.py`
-  - `generate_sentences_from_pdf_mock`: 추후 PDF 텍스트 추출 및 LLM 문장 생성으로 교체
-- `app/services/shop_service.py`
-  - seed 데이터의 `example.com` URL: 추후 AWS S3 URL로 교체
+결국 표나 차트가 많은 수업자료까지 생각하면 PDF를 직접 첨부하는 쪽이 더 맞아 보입니다. 표나 차트가 거의 없는 줄글 자료라면 텍스트 추출 방식도 충분하지만, 2026년 기준 저비용 LLM API들도 PDF 안에서 문장을 추출하고 적당히 가공하는 정도는 꽤 안정적으로 처리할 수 있습니다. 이 프로젝트의 MVP 요구사항에는 오히려 그 방식이 더 잘 맞습니다.
 
-## 제외한 기능
-
-MVP 범위에 맞춰 아래 기능과 테이블은 구현하지 않았습니다.
-
-- 자체 username/password 로그인
-- profile_image_url 저장
-- PDF 원본 저장
-- 생성 문장 저장
-- 연습 기록 저장
-- point_transactions, practice_sessions, uploaded_files, generated_sentences 테이블
-- 관리자 기능, 랭킹, 통계, 자료 보관함, 정교한 어뷰징 방지
+따라서 현재는 서버에서 PDF 텍스트 추출 파이프라인을 따로 안정화하기보다는, 업로드된 PDF를 저장하지 않고 LLM API에 직접 첨부해서 타이핑 연습 문장을 생성하는 방식을 우선 고려합니다. 나중에 비용, 응답 속도, 출처 추적, PDF 재사용 기능이 중요해지면 그때 텍스트 추출 기반 파이프라인으로 바꾸거나 병행하면 됩니다.
