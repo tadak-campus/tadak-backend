@@ -8,7 +8,7 @@ from app.schemas import PracticeCompleteRequest, PracticeCompleteResponse, Pract
 from app.services.practice_service import (
     add_practice_point,
     calculate_practice_point,
-    generate_sentences_from_pdf_mock,
+    generate_sentences_from_pdf,
 )
 
 
@@ -21,7 +21,7 @@ async def generate_practice_sentences(
     _: User = Depends(get_current_user),
 ):
     pdf_bytes = await file.read()
-    sentences = generate_sentences_from_pdf_mock(pdf_bytes)
+    sentences = generate_sentences_from_pdf(pdf_bytes)
     return PracticeGenerateResponse(sentences=sentences)
 
 
