@@ -4,8 +4,7 @@ from app.models import ShopItemType
 
 
 class KakaoLoginRequest(BaseModel):
-    kakao_id: str
-    profile_nickname: str
+    kakao_access_token: str
 
 
 class TokenResponse(BaseModel):
