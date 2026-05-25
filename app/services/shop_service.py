@@ -49,6 +49,20 @@ def get_owned_item_ids(db: Session, user_id: int) -> set[int]:
     return {row[0] for row in rows}
 
 
+# 사용자가 현재 장착 중인 아이템 id 목록을 set으로 만든다.
+def get_equipped_item_ids(user: User) -> set[int]:
+    return {
+        item_id
+        for item_id in [
+            user.equipped_keyboard_item_id,
+            user.equipped_background_item_id,
+            user.equipped_sound_item_id,
+            user.equipped_decoration_item_id,
+        ]
+        if item_id is not None
+    }
+
+
 # 특정 사용자가 특정 아이템을 이미 보유했는지 확인한다.
 def owns_item(db: Session, user_id: int, item_id: int) -> bool:
     return (

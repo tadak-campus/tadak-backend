@@ -28,6 +28,7 @@ class ShopItemResponse(BaseModel):
     thumbnail_url: str | None
     asset_url: str | None
     is_owned: bool = False
+    is_equipped: bool = False
     sound_files: list[SoundFileResponse] = []
 
     model_config = {"from_attributes": True}
@@ -46,6 +47,12 @@ class UserMeResponse(BaseModel):
     profile_nickname: str
     point: int
     equipped_items: EquippedItemsResponse
+
+
+class ShopSummaryResponse(BaseModel):
+    point: int
+    equipped_items: EquippedItemsResponse
+    items: list[ShopItemResponse]
 
 
 class PracticeGenerateResponse(BaseModel):

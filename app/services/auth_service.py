@@ -13,7 +13,7 @@ from app.models import User
 
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "tadak-dev-secret")
-JWT_EXPIRE_SECONDS = 60 * 60 * 24
+JWT_EXPIRE_SECONDS = 60 * 60 * 240
 
 KAKAO_USER_ME_URL = "https://kapi.kakao.com/v2/user/me"
 

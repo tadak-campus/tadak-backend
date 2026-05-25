@@ -5,39 +5,30 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import ShopItem, User, UserOwnedItem
 from app.response_helpers import to_equipped_items_response, to_shop_item_response
-from app.schemas import BuyItemResponse, EquipItemResponse, ShopItemResponse
-from app.services.shop_service import equip_item_by_type, get_owned_item_ids, owns_item
+from app.schemas import BuyItemResponse, EquipItemResponse, ShopSummaryResponse
+from app.services.shop_service import equip_item_by_type, get_equipped_item_ids, get_owned_item_ids, owns_item
 
 
 router = APIRouter(prefix="/api/shop", tags=["shop"])
 
 
-# 상점에 등록된 전체 아이템 목록과 현재 사용자의 보유 여부를 반환한다.
-@router.get("/items", response_model=list[ShopItemResponse])
-def get_shop_items(
+# 상점 화면에 필요한 포인트, 장착 아이템, 전체 상품 목록을 한 번에 반환한다.
+@router.get("/summary", response_model=ShopSummaryResponse)
+def get_shop_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     owned_item_ids = get_owned_item_ids(db, current_user.id)
+    equipped_item_ids = get_equipped_item_ids(current_user)
     items = db.query(ShopItem).order_by(ShopItem.id).all()
-    return [to_shop_item_response(item, owned_item_ids) for item in items]
-
-
-# 현재 사용자가 구매하거나 지급받아 보유 중인 아이템 목록을 반환한다.
-@router.get("/my-items", response_model=list[ShopItemResponse])
-def get_my_items(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    owned_item_ids = get_owned_item_ids(db, current_user.id)
-    items = (
-        db.query(ShopItem)
-        .join(UserOwnedItem, UserOwnedItem.item_id == ShopItem.id)
-        .filter(UserOwnedItem.user_id == current_user.id)
-        .order_by(ShopItem.id)
-        .all()
+    return ShopSummaryResponse(
+        point=current_user.point,
+        equipped_items=to_equipped_items_response(current_user),
+        items=[
+            to_shop_item_response(item, owned_item_ids, equipped_item_ids)
+            for item in items
+        ],
     )
-    return [to_shop_item_response(item, owned_item_ids) for item in items]
 
 
 # 포인트를 차감하고 선택한 상점 아이템을 사용자 보유 목록에 추가한다.
