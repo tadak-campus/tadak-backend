@@ -17,16 +17,16 @@ def seed_default_shop_items(db: Session) -> None:
         asset_url="https://example.com/assets/default-keyboard.png",
     )
     background = ShopItem(
-        name="캠퍼스 배경",
+        name="기본 배경",
         type=ShopItemType.BACKGROUND,
-        price=300,
+        price=0,
         thumbnail_url="https://example.com/assets/campus-bg-thumb.png",
         asset_url="https://example.com/assets/campus-bg.png",
     )
     sound = ShopItem(
-        name="맑은 타건음",
+        name="기본 타건음",
         type=ShopItemType.SOUND,
-        price=200,
+        price=0,
         thumbnail_url="https://example.com/assets/clear-sound-thumb.png",
         asset_url=None,
     )
@@ -39,7 +39,7 @@ def seed_default_shop_items(db: Session) -> None:
     )
     db.add_all([keyboard, background, sound, decoration])
     db.flush()
-    db.add(SoundFile(item_id=sound.id, name="기본 클릭음", file_url="https://example.com/sounds/click.mp3"))
+    db.add(SoundFile(item_id=sound.id, name="기본 클릭음", file_url="https://example.com/sounds/click.mp3")) # todo: 실제 사운드 파일 URL로 변경
     db.commit()
 
 
