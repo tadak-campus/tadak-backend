@@ -1,0 +1,13 @@
+services:
+  backend:
+    build: .
+    container_name: tadak-backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////app/data/tadak.db
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
