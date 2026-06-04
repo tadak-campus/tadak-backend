@@ -3,43 +3,108 @@ from sqlalchemy.orm import Session
 from app.models import ShopItem, ShopItemType, SoundFile, User, UserOwnedItem
 
 
-# 서버 시작 시 상점에 기본 상품이 없으면 초기 상품 데이터를 넣는다.
-def seed_default_shop_items(db: Session) -> None:
-    if db.query(ShopItem).first():
-        return
+ASSET_BASE_URL = "https://cloud-computer-temp.s3.ap-northeast-2.amazonaws.com/assets"
 
-    # TODO: 실제 AWS S3 업로드가 붙으면 example URL 대신 S3 asset URL을 저장한다.
-    keyboard = ShopItem(
-        name="기본 키보드",
-        type=ShopItemType.KEYBOARD,
-        price=0,
-        thumbnail_url="https://example.com/assets/default-keyboard-thumb.png",
-        asset_url="https://example.com/assets/default-keyboard.png",
+
+DEFAULT_SHOP_ITEMS = [
+    {
+        "name": "키보드 1",
+        "type": ShopItemType.KEYBOARD,
+        "price": 100,
+        "asset_url": None,
+    },
+    {
+        "name": "키보드 2",
+        "type": ShopItemType.KEYBOARD,
+        "price": 150,
+        "asset_url": None,
+    },
+    {
+        "name": "키보드 3",
+        "type": ShopItemType.KEYBOARD,
+        "price": 200,
+        "asset_url": None,
+    },
+    {
+        "name": "다크 배경",
+        "type": ShopItemType.BACKGROUND,
+        "price": 200,
+        "asset_url": f"{ASSET_BASE_URL}/background/bg-dark.png",
+    },
+    {
+        "name": "네온 배경",
+        "type": ShopItemType.BACKGROUND,
+        "price": 300,
+        "asset_url": f"{ASSET_BASE_URL}/background/bg-neon.png",
+    },
+    {
+        "name": "파스텔 배경",
+        "type": ShopItemType.BACKGROUND,
+        "price": 250,
+        "asset_url": f"{ASSET_BASE_URL}/background/bg-pastel.png",
+    },
+    {
+        "name": "우드 배경",
+        "type": ShopItemType.BACKGROUND,
+        "price": 250,
+        "asset_url": f"{ASSET_BASE_URL}/background/bg-wood.png",
+    },
+    {
+        "name": "화분 장식",
+        "type": ShopItemType.DECORATION,
+        "price": 150,
+        "asset_url": f"{ASSET_BASE_URL}/decoration/deco-plant.png",
+    },
+    {
+        "name": "별 장식",
+        "type": ShopItemType.DECORATION,
+        "price": 180,
+        "asset_url": f"{ASSET_BASE_URL}/decoration/deco-stars.png",
+    },
+]
+
+
+# 서버 시작 시 S3에 올라간 상점 상품이 없으면 추가하고, 있으면 최신 URL로 갱신한다.
+def seed_default_shop_items(db: Session) -> None:
+    legacy_items = (
+        db.query(ShopItem)
+        .filter(
+            (ShopItem.thumbnail_url.like("https://example.com/%"))
+            | (ShopItem.asset_url.like("https://example.com/%"))
+        )
+        .all()
     )
-    background = ShopItem(
-        name="기본 배경",
-        type=ShopItemType.BACKGROUND,
-        price=0,
-        thumbnail_url="https://example.com/assets/campus-bg-thumb.png",
-        asset_url="https://example.com/assets/campus-bg.png",
-    )
-    sound = ShopItem(
-        name="기본 타건음",
-        type=ShopItemType.SOUND,
-        price=0,
-        thumbnail_url="https://example.com/assets/clear-sound-thumb.png",
-        asset_url=None,
-    )
-    decoration = ShopItem(
-        name="책상 화분",
-        type=ShopItemType.DECORATION,
-        price=150,
-        thumbnail_url="https://example.com/assets/plant-thumb.png",
-        asset_url="https://example.com/assets/plant.png",
-    )
-    db.add_all([keyboard, background, sound, decoration])
-    db.flush()
-    db.add(SoundFile(item_id=sound.id, name="기본 클릭음", file_url="https://example.com/sounds/click.mp3")) # todo: 실제 사운드 파일 URL로 변경
+    for item in legacy_items:
+        db.query(User).filter(User.equipped_keyboard_item_id == item.id).update(
+            {User.equipped_keyboard_item_id: None}
+        )
+        db.query(User).filter(User.equipped_background_item_id == item.id).update(
+            {User.equipped_background_item_id: None}
+        )
+        db.query(User).filter(User.equipped_sound_item_id == item.id).update(
+            {User.equipped_sound_item_id: None}
+        )
+        db.query(User).filter(User.equipped_decoration_item_id == item.id).update(
+            {User.equipped_decoration_item_id: None}
+        )
+        db.query(UserOwnedItem).filter(UserOwnedItem.item_id == item.id).delete()
+        db.query(SoundFile).filter(SoundFile.item_id == item.id).delete()
+        db.delete(item)
+
+    for item_data in DEFAULT_SHOP_ITEMS:
+        item = (
+            db.query(ShopItem)
+            .filter(ShopItem.name == item_data["name"], ShopItem.type == item_data["type"])
+            .first()
+        )
+        if not item:
+            item = ShopItem(name=item_data["name"], type=item_data["type"])
+            db.add(item)
+
+        item.price = item_data["price"]
+        item.thumbnail_url = item_data.get("asset_url")
+        item.asset_url = item_data.get("asset_url")
+
     db.commit()
 
 
