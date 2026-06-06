@@ -26,6 +26,36 @@ DEFAULT_SHOP_ITEMS = [
         "asset_url": None,
     },
     {
+        "name": "사운드 1",
+        "type": ShopItemType.SOUND,
+        "price": 100,
+        "asset_url": None,
+    },
+    {
+        "name": "사운드 2",
+        "type": ShopItemType.SOUND,
+        "price": 120,
+        "asset_url": None,
+    },
+    {
+        "name": "사운드 3",
+        "type": ShopItemType.SOUND,
+        "price": 140,
+        "asset_url": None,
+    },
+    {
+        "name": "사운드 4",
+        "type": ShopItemType.SOUND,
+        "price": 160,
+        "asset_url": None,
+    },
+    {
+        "name": "사운드 5",
+        "type": ShopItemType.SOUND,
+        "price": 180,
+        "asset_url": None,
+    },
+    {
         "name": "다크 배경",
         "type": ShopItemType.BACKGROUND,
         "price": 200,
