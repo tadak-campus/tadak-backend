@@ -26,6 +26,18 @@ DEFAULT_SHOP_ITEMS = [
         "asset_url": None,
     },
     {
+        "name": "키보드 4",
+        "type": ShopItemType.KEYBOARD,
+        "price": 250,
+        "asset_url": None,
+    },
+    {
+        "name": "키보드 5",
+        "type": ShopItemType.KEYBOARD,
+        "price": 300,
+        "asset_url": None,
+    },
+    {
         "name": "사운드 1",
         "type": ShopItemType.SOUND,
         "price": 100,
